@@ -1,0 +1,28 @@
+CREATE TABLE IF NOT EXISTS manufacturing_cycle (
+    `zid` UInt64,
+    `项目号` String,
+    `项目简称` String,
+    `项目名称` String,
+    `车号` String,
+    `节车号` String,
+    `最早计划开始` Nullable(DateTime64(3)),
+    `最晚计划结束` Nullable(DateTime64(3)),
+    `进车计划开始` Nullable(DateTime64(3)),
+    `Q30计划开始` Nullable(DateTime64(3)),
+    `调车计划开始` Nullable(DateTime64(3)),
+    `连接计划开始` Nullable(DateTime64(3)),
+    `Q40计划开始` Nullable(DateTime64(3)),
+    `发运计划开始` Nullable(DateTime64(3)),
+    `进车实际开始` Nullable(DateTime64(3)),
+    `Q30实际开始` Nullable(DateTime64(3)),
+    `调车实际开始` Nullable(DateTime64(3)),
+    `连接实际开始` Nullable(DateTime64(3)),
+    `Q40实际开始` Nullable(DateTime64(3)),
+    `发运实际开始` Nullable(DateTime64(3)),
+    `组装周期天` Nullable(Float64),
+    `落车周期天` Nullable(Float64),
+    `调试周期天` Nullable(Float64),
+    `交付周期天` Nullable(Float64),
+    `整个制造周期天` Nullable(Float64)
+) ENGINE = MergeTree
+ORDER BY zid;

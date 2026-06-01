@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>制造周期看板</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f9;
+            --card-bg: #ffffff;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --accent-blue: #2c3e50;
+            --accent-red: #e74c3c;
+            --border-color: #e0e0e0;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Microsoft YaHei", -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        .filters {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-group label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .filters select {
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: #fff;
+            color: var(--text-primary);
+            min-width: 150px;
+            cursor: pointer;
+        }
+
+        .filters select:disabled {
+            background-color: #f5f5f5;
+            cursor: not-allowed;
+        }
+
+        .section-header {
+            text-align: center;
+            margin: 30px 0 20px;
+            position: relative;
+        }
+
+        .section-header h2 {
+            font-size: 1.25rem;
+            color: var(--accent-blue);
+            font-weight: bold;
+            display: inline-block;
+            background-color: var(--bg-color);
+            padding: 0 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .section-header::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            height: 1px;
+            background-color: var(--border-color);
+            z-index: 0;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px 10px;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 140px;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .card-value {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: var(--accent-blue);
+            line-height: 1.1;
+        }
+
+        .card-value.highlight {
+            color: var(--accent-red);
+        }
+
+        .card-unit {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-left: 4px;
+            font-weight: normal;
+        }
+
+        .yearly-list-container {
+            margin-top: 40px;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        .timeline-container {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            min-width: 1500px;
+        }
+
+        th {
+            background-color: #f8f9fb;
+            color: var(--text-secondary);
+            font-weight: 600;
+            padding: 12px 8px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px 8px;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            text-align: center;
+        }
+
+        tr:hover {
+            background-color: #fcfcfc;
+        }
+
+        .status-pill {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            width: 100%;
+        }
+
+        .status-planned {
+            background-color: #ebf5ff;
+            color: #007bff;
+        }
+
+        .status-actual {
+            background-color: #e6fffa;
+            color: #38a169;
+        }
+
+        .status-none {
+            background-color: #f7fafc;
+            color: #a0aec0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 100px 20px;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            border: 1px dashed var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: var(--accent-blue);
+        }
+
+        .error-message {
+            color: var(--accent-red);
+            padding: 20px;
+            text-align: center;
+            background: #fff;
+            border: 1px solid var(--accent-red);
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 1200px) {
+            .cards-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .cards-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .card-value {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚂 制造周期看板</h1>
+            <div class="filters">
+                <div class="filter-group">
+                    <label>项目简称:</label>
+                    <select id="projectSelect" onchange="onProjectChange()">
+                        <option value="">-- 请选择 --</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>车号:</label>
+                    <select id="carSelect" onchange="onCarChange()" disabled>
+                        <option value="">-- 请选择 --</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>节车号:</label>
+                    <select id="sectionSelect" onchange="loadDashboardData()" disabled>
+                        <option value="">-- 请选择 --</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+        <div id="loading" class="loading" style="display: none;">
+            <p>数据加载中...</p>
+        </div>
+
+        <div id="content" style="display: none;">
+            <div class="section-header">
+                <h2>制造周期汇总</h2>
+            </div>
+            <div class="cards-grid" id="cardsGrid"></div>
+
+            <div class="section-header">
+                <h2>关键节点明细</h2>
+            </div>
+            <div class="timeline-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th rowspan="2">项目号</th>
+                            <th rowspan="2">车号</th>
+                            <th rowspan="2">节车号</th>
+                            <th colspan="2">进车</th>
+                            <th colspan="2">Q30</th>
+                            <th colspan="2">调车</th>
+                            <th colspan="2">连接</th>
+                            <th colspan="2">Q40</th>
+                            <th colspan="2">发运</th>
+                        </tr>
+                        <tr>
+                            <th>计划</th>
+                            <th>实际</th>
+                            <th>计划</th>
+                            <th>实际</th>
+                            <th>计划</th>
+                            <th>实际</th>
+                            <th>计划</th>
+                            <th>实际</th>
+                            <th>计划</th>
+                            <th>实际</th>
+                            <th>计划</th>
+                            <th>实际</th>
+                        </tr>
+                    </thead>
+                    <tbody id="timelineBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="yearlyContent">
+            <div class="section-header">
+                <h2>本年项目制造周期列表</h2>
+            </div>
+            <div class="yearly-list-container">
+                <table id="yearlyTable">
+                    <thead>
+                        <tr>
+                            <th>项目号</th>
+                            <th>项目简称</th>
+                            <th>车号</th>
+                            <th>节车号</th>
+                            <th>组装周期(天)</th>
+                            <th>落车周期(天)</th>
+                            <th>调试周期(天)</th>
+                            <th>交付周期(天)</th>
+                            <th>整个制造周期(天)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="yearlyBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="emptyState" class="empty-state">
+            <p>请依次选择项目简称、车号和节车号以查看详情数据</p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+
+        async function loadProjects() {
+            loadYearlyData(); // 初始加载本年数据列表
+            try {
+                const res = await fetch(`${API_BASE}/projects`);
+                if (!res.ok) throw new Error('无法获取项目列表');
+                const projects = await res.json();
+                const select = document.getElementById('projectSelect');
+                projects.forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = p;
+                    option.textContent = p;
+                    select.appendChild(option);
+                });
+            } catch (err) {
+                showError(`加载项目列表失败: ${err.message}`);
+            }
+        }
+
+        async function onProjectChange() {
+            const projectId = document.getElementById('projectSelect').value;
+            const carSelect = document.getElementById('carSelect');
+            const sectionSelect = document.getElementById('sectionSelect');
+            
+            // Reset and disable subsequent filters
+            carSelect.innerHTML = '<option value="">-- 请选择 --</option>';
+            carSelect.disabled = true;
+            sectionSelect.innerHTML = '<option value="">-- 请选择 --</option>';
+            sectionSelect.disabled = true;
+            
+            hideDashboard();
+
+            if (!projectId) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/cars?project_id=${encodeURIComponent(projectId)}`);
+                if (!res.ok) throw new Error('无法获取车号列表');
+                const cars = await res.json();
+                cars.forEach(c => {
+                    const option = document.createElement('option');
+                    option.value = c;
+                    option.textContent = c;
+                    carSelect.appendChild(option);
+                });
+                carSelect.disabled = false;
+            } catch (err) {
+                showError(`加载车号失败: ${err.message}`);
+            }
+        }
+
+        async function onCarChange() {
+            const projectId = document.getElementById('projectSelect').value;
+            const carId = document.getElementById('carSelect').value;
+            const sectionSelect = document.getElementById('sectionSelect');
+            
+            sectionSelect.innerHTML = '<option value="">-- 请选择 --</option>';
+            sectionSelect.disabled = true;
+            
+            hideDashboard();
+
+            if (!carId) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/sections?project_id=${encodeURIComponent(projectId)}&car_id=${encodeURIComponent(carId)}`);
+                if (!res.ok) throw new Error('无法获取节车号列表');
+                const sections = await res.json();
+                sections.forEach(s => {
+                    const option = document.createElement('option');
+                    option.value = s;
+                    option.textContent = s;
+                    sectionSelect.appendChild(option);
+                });
+                sectionSelect.disabled = false;
+            } catch (err) {
+                showError(`加载节车号失败: ${err.message}`);
+            }
+        }
+
+        async function loadDashboardData() {
+            const projectId = document.getElementById('projectSelect').value;
+            const carId = document.getElementById('carSelect').value;
+            const sectionId = document.getElementById('sectionSelect').value;
+            
+            const loading = document.getElementById('loading');
+            const content = document.getElementById('content');
+            const emptyState = document.getElementById('emptyState');
+
+            if (!sectionId) {
+                hideDashboard();
+                return;
+            }
+
+            loading.style.display = 'block';
+            content.style.display = 'none';
+            emptyState.style.display = 'none';
+
+            try {
+                const res = await fetch(`${API_BASE}/data?project_id=${encodeURIComponent(projectId)}&car_id=${encodeURIComponent(carId)}&section_id=${encodeURIComponent(sectionId)}`);
+
+                if (!res.ok) throw new Error('获取详情数据失败');
+
+                const data = await res.json();
+
+                renderCards(data);
+                renderTable(data);
+
+                loading.style.display = 'none';
+                content.style.display = 'block';
+                // 详情加载时不需要重新加载本年列表，因为它已经在初始化或显式请求时加载了
+            } catch (err) {
+                loading.style.display = 'none';
+                showError(`加载数据失败: ${err.message}`);
+            }
+        }
+
+        async function loadYearlyData() {
+            try {
+                const res = await fetch(`${API_BASE}/yearly-data`);
+                if (!res.ok) throw new Error('获取本年汇总数据失败');
+                const yearlyData = await res.json();
+                renderYearlyTable(yearlyData);
+            } catch (err) {
+                console.error(err);
+                // 这里不需要显示大错误提示，避免干扰
+            }
+        }
+
+        function renderCards(data) {
+            const cards = [
+                { title: '组装周期', value: data.组装周期天 },
+                { title: '落车周期', value: data.落车周期天 },
+                { title: '调试周期', value: data.调试周期天 },
+                { title: '交付周期', value: data.交付周期天 },
+                { title: '整个制造周期', value: data.整个制造周期天, highlight: true }
+            ];
+
+            const grid = document.getElementById('cardsGrid');
+            grid.innerHTML = cards.map(card => `
+                <div class="card">
+                    <div class="card-title">${card.title}</div>
+                    <div class="card-value ${card.highlight ? 'highlight' : ''}">
+                        ${card.value != null ? card.value.toFixed(1) : '--'}
+                        <span class="card-unit">天</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('timelineBody');
+            const nodes = [
+                { p: '进车计划开始', a: '进车实际开始' },
+                { p: 'Q30计划开始', a: 'Q30实际开始' },
+                { p: '调车计划开始', a: '调车实际开始' },
+                { p: '连接计划开始', a: '连接实际开始' },
+                { p: 'Q40计划开始', a: 'Q40实际开始' },
+                { p: '发运计划开始', a: '发运实际开始' }
+            ];
+
+            let html = `<tr>
+                <td>${data.项目号}</td>
+                <td>${data.项目简称}</td>
+                <td>${data.车号}</td>
+                <td>${data.节车号}</td>`;
+            nodes.forEach(node => {
+                html += `
+                    <td><span class="status-pill ${data[node.p] ? 'status-planned' : 'status-none'}">${formatDateTime(data[node.p])}</span></td>
+                    <td><span class="status-pill ${data[node.a] ? 'status-actual' : 'status-none'}">${formatDateTime(data[node.a])}</span></td>
+                `;
+            });
+            
+            html += `</tr>`;
+            tbody.innerHTML = html;
+        }
+
+        function renderYearlyTable(data) {
+            const tbody = document.getElementById('yearlyBody');
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9">暂无近一年数据</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map(item => `
+                <tr>
+                    <td>${item.项目号}</td>
+                    <td>${item.项目简称}</td>
+                    <td>${item.车号}</td>
+                    <td>${item.节车号}</td>
+                    <td>${item.组装周期天 != null ? item.组装周期天.toFixed(1) : '--'}</td>
+                    <td>${item.落车周期天 != null ? item.落车周期天.toFixed(1) : '--'}</td>
+                    <td>${item.调试周期天 != null ? item.调试周期天.toFixed(1) : '--'}</td>
+                    <td>${item.交付周期天 != null ? item.交付周期天.toFixed(1) : '--'}</td>
+                    <td style="font-weight: bold; color: var(--accent-red);">${item.整个制造周期天 != null ? item.整个制造周期天.toFixed(1) : '--'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function formatDateTime(dt) {
+            if (!dt) return '--';
+            const date = new Date(dt);
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            const hh = String(date.getHours()).padStart(2, '0');
+            const mm = String(date.getMinutes()).padStart(2, '0');
+            return `${y}-${m}-${d} ${hh}:${mm}`;
+        }
+
+        function showError(msg) {
+            const errDiv = document.getElementById('errorMessage');
+            errDiv.textContent = msg;
+            errDiv.style.display = 'block';
+            setTimeout(() => { errDiv.style.display = 'none'; }, 5000);
+        }
+
+        function hideDashboard() {
+            document.getElementById('content').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'block';
+        }
+
+        loadProjects();
+    </script>
+</body>
+</html>
