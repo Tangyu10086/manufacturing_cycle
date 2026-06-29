@@ -106,7 +106,7 @@ async def get_sections(project_abbr: str = Query(..., alias="project_id"), car_i
             "SELECT DISTINCT `节车号` FROM dwd.manufacturing_cycle WHERE `项目简称` = %(pabbr)s AND `车号` = %(cid)s ORDER BY `节车号`",
             {'pabbr': project_abbr, 'cid': car_id}
         )
-        return [str(row['车号']) for _, row in result.iterrows()]
+        return [str(row['节车号']) for _, row in result.iterrows()]
     except Exception as e:
         print(f"Error in get_sections: {e}")
         traceback.print_exc()
